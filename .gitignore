@@ -25,3 +25,1795 @@ Pods
 # Apple Docs
 docs/**
 
+
+
+
+SSL pinning is used to avoid man in middle attacks
+Ssl allows connection between trusted sources, there will be a problem when some one sits in between client and server, pretend it as trusted source. These things can be avoided by comparing the server certificate with the one saved locally in the application bundle.
+
+
+
+—keychain
+—sql cipher 
+
+
+ViewBuilder
+@ViewBuilder is one of the most important concepts in SwiftUI for iOS development, especially in interviews. It is a result builder that enables a declarative, DSL-like syntax for composing multiple views inside a closure without explicit return statements or grouping.
+
+It transforms multiple view expressions in a closure into a single View (often a TupleView or Group under the hood).
+
+	•	Used extensively in containers like VStack, HStack, List, Button (label), custom views, etc.
+
+import SwiftUI
+struct ContentView: View {
+    var body: some View {           // Implicitly uses @ViewBuilder
+        VStack {                    // @ViewBuilder in action
+            Text("Hello")
+            Text("World")
+            Image(systemName: "star")
+            Rectangle().fill(.blue).frame(height: 50)
+        }
+    }
+}
+You don't need return or to wrap everything in a Group.
+===
+Group is a container view in SwiftUI that groups multiple views together without adding any visual styling, layout, or extra view hierarchy overhead.
+
+It is transparent — it doesn't affect layout, spacing, background, or appearance. It only serves as a logical container.
+
+Common Use Cases
+	0.	Applying modifiers to multiple views at once
+Swift
+
+
+Group {
+    Text("Hello")
+    Text("World")
+    Text("SwiftUI")
+}
+.font(.title)
+.foregroundColor(.blue)
+.padding()
+
+	0.	Conditional Views (with @ViewBuilder)
+Swift
+
+
+@ViewBuilder
+var content: some View {
+    if showAdvanced {
+        Group {
+            Text("Advanced Feature 1")
+            Text("Advanced Feature 2")
+            Slider(value: $value)
+        }
+    } else {
+        Text("Basic Mode")
+    }
+}
+
+What are Opaque Types in Swift?
+"Opaque types, introduced using the some keyword, allow us to hide the concrete implementation type while exposing only the protocol it conforms to. This provides abstraction without losing compile-time type information, so we get both flexibility and performance. SwiftUI heavily relies on opaque types through some View."
+
+
+What is the difference between some and any?
+Answer: "some represents a single hidden concrete type chosen by the implementation, whereas any represents a type-erased protocol that can hold any conforming type at runtime. Because the compiler knows the underlying type for some, it generally offers better performance than any.
+
+
+Why does SwiftUI use some View instead of View?
+Answer: "The View protocol contains an associated type, so it cannot be used directly as a return type. By using some View, SwiftUI hides the complex underlying view hierarchy while preserving type safety and compile-time optimizations. This keeps the API simple while maintaining performance."
+
+Can a function returning some Protocol return different concrete types?
+Answer: "No. A function returning an opaque type must always return the same underlying concrete type across all code paths. If multiple concrete types are needed, we typically use type erasure with any or a custom wrapper."
+
+Give a real-world SwiftUI use case for Opaque Types.
+Answer: "Every SwiftUI view uses opaque types through var body: some View. This allows SwiftUI to hide the extremely complex types created by modifier chains while still enabling compile-time checking and efficient view diffing."
+
+
+
+Component composition: is design principle where you design complex uI by using smaller, reusable components rather than using inheritance or large monolithic views.
+
+Best practises u follow:
+Solid
+Component composition
+Mvvm
+
+
+What is SRP?
+
+"A class should have one and only one reason to change."
+In Swift, this means:
+	•	A class or struct should do only one thing.
+	•	That “thing” should be clearly defined and cohesive.
+	•	If multiple responsibilities exist, they should be split into smaller units.
+
+class UserManager {
+    func registerUser(email: String, password: String) {
+        // validate
+        if email.isEmpty || password.count < 6 {
+            print("Invalid input")
+            return
+        }
+
+        // send network request
+        let url = URL(string: "https://example.com/register")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.httpBody = try? JSONEncoder().encode(["email": email, "password": password])
+        URLSession.shared.dataTask(with: request).resume()
+
+        // save to UserDefaults
+        UserDefaults.standard.set(email, forKey: "loggedInUser")
+    }
+}
+
+Problems:
+	•	Does validation
+	•	Does networking
+	•	Does persistence
+	•	Multiple reasons to change:
+
+struct UserValidator {
+    func validate(email: String, password: String) -> Bool {
+        !email.isEmpty && password.count >= 6
+    }
+}
+
+
+Open/Closed Principle (OCP) in Swift
+“Software entities (classes, modules, functions) should be open for extension, but closed for modification.”
+
+
+You should be able to extend the behavior of a class without modifying its existing source code.
+Helps prevent bugs, improves maintainability, and supports scalable architecture.
+
+protocol Notifiable {
+    func send()
+}
+
+class EmailNotification: Notifiable {
+    func send() {
+        print("Send Email")
+    }
+}
+
+class SMSNotification: Notifiable {
+    func send() {
+        print("Send SMS")
+    }
+}
+
+class PushNotification: Notifiable {
+    func send() {
+        print("Send Push Notification")
+    }
+}
+
+Liskov Substitution Principle (LSP)
+
+"Objects of a superclass should be replaceable with objects of its subclasses without altering the correctness of the program."
+— Barbara Liskov
+
+In Swift terms:
+	•	If you have a base class or protocol, its subclass or conforming type should honor the expectations of the base.
+	•	Subtypes must be behaviorally substitutable, not just syntactically compatible.
+
+protocol Bird {
+    var name: String { get }
+}
+
+protocol Flyable {
+    func fly()
+}
+
+class Sparrow: Bird, Flyable {
+    let name = "Sparrow"
+    func fly() {
+        print("Sparrow is flying")
+    }
+}
+
+class Ostrich: Bird {
+    let name = "Ostrich"
+    // No fly method, and that’s OK
+}
+
+protocol PaymentMethod {
+    func pay(amount: Double) throws
+}
+
+
+Interface Segregation Principle (ISP)
+
+"Clients should not be forced to depend on interfaces they do not use."
+
+In Swift terms:
+	•	Don't force conforming types to implement unused protocol requirements.
+	•	Break large protocols into smaller, focused protocols.
+	•	Encourage composition over inheritance.
+
+protocol Depositable {
+    func deposit(amount: Double)
+}
+
+protocol Withdrawable {
+    func withdraw(amount: Double)
+}
+
+protocol Transferable {
+    func transfer(to account: Transferable, amount: Double)
+}
+
+protocol StatementPrintable {
+    func generateStatement()
+}
+
+Dependency Inversion:
+States that higher level modules should not depend on lower level modules both should depend on abstraction(protocals) .
+
+Lets say in view model having network call, we should not directly use url session, we should use protocal instead.
+
+Where will be having
+
+Protocol NetworkServicing  {
+
+Func request<T: Deocodable> (endpoint: URLRequest) -> AnyPublisher<T, Error>
+
+}
+
+final class NetworkService: NetworkServicing {
+    func request<T: Decodable>(_ endpoint: URLRequest) -> AnyPublisher<T, Error> {
+        URLSession.shared.dataTaskPublisher(for: endpoint)
+            .map(\.data)
+            .decode(type: T.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+}
+
+So that it can be mocked easily and testable.
+
+enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case put = "PUT"
+    case delete = "DELETE"
+}
+
+enum HTTPHeader {
+    case contentType(String)
+    case authorization(String)
+
+    var keyValue: (String, String) {
+        switch self {
+        case .contentType(let type): return ("Content-Type", type)
+        case .authorization(let token): return ("Authorization", "Bearer \(token)")
+        }
+    }
+}
+
+enum APIEndpoint {
+    case login
+    case userProfile(id: Int)
+    case updateUser(id: Int)
+    
+    var path: String {
+        switch self {
+        case .login: return "/login"
+        case .userProfile(let id): return "/users/\(id)"
+        case .updateUser(let id): return "/users/\(id)"
+        }
+    }
+
+    var method: HTTPMethod {
+        switch self {
+        case .login: return .post
+        case .userProfile: return .get
+        case .updateUser: return .put
+        }
+    }
+
+    var headers: [HTTPHeader] {
+        [.contentType("application/json")]
+    }
+    
+    var baseURL: URL {
+        URL(string: "https://api.example.com")!
+    }
+}
+
+struct APIRequest {
+    let endpoint: APIEndpoint
+    let body: Encodable?
+
+    func asURLRequest() -> URLRequest {
+        let url = endpoint.baseURL.appendingPathComponent(endpoint.path)
+        var request = URLRequest(url: url)
+        request.httpMethod = endpoint.method.rawValue
+
+        for header in endpoint.headers {
+            let (key, value) = header.keyValue
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        if let body = body {
+            request.httpBody = try? JSONEncoder().encode(AnyEncodable(body))
+        }
+
+        return request
+    }
+}
+
+struct AnyEncodable: Encodable {
+    private let encodeFn: (Encoder) throws -> Void
+    init<T: Encodable>(_ wrapped: T) {
+        self.encodeFn = wrapped.encode
+    }
+    func encode(to encoder: Encoder) throws {
+        try encodeFn(encoder)
+    }
+}
+
+protocol NetworkServicing {
+    func request<T: Decodable>(_ apiRequest: APIRequest) -> AnyPublisher<T, Error>
+}
+
+final class NetworkService: NetworkServicing {
+    func request<T: Decodable>(_ apiRequest: APIRequest) -> AnyPublisher<T, Error> {
+        let urlRequest = apiRequest.asURLRequest()
+
+        return URLSession.shared.dataTaskPublisher(for: urlRequest)
+            .map(\.data)
+            .decode(type: T.self, decoder: JSONDecoder())
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+}
+
+
+
+	0.	@ViewBuilder: we typically use this attribute  to create child views for a given view.
+
+	View protocol  has “body” property which was marked as “@ViewBuilder” to views.
+
+	0.	Not every uikit view is available in swiftui. For eg wkwebview. To use uikit views in swiftui, we use UIViewRepresentable protocal.
+It has makeuiview and update method.makeuiview is used to initialise and update is used update when redraw occurs in swiftui view.
+
+struct SharedWithYouAttributionView: UIViewRepresentable {
+    let highlight: SWHighlight
+    let displayContext: SWAttributionView.DisplayContext
+
+    func makeUIView(context: Context) -> SWAttributionView {
+        return SWAttributionView()
+    }
+
+    func updateUIView(_ uiView: SWAttributionView, context: Context) {
+        uiView.highlight = highlight
+        uiView.displayContext = displayContext
+    }
+} 
+
+if canImport(SwiftUI) && DEBUG
+import SwiftUI
+struct SwiftLeeViewRepresentable: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        return UIStoryboard(name: "Main", bundle: Bundle.main).instantiateInitialViewController()!.view
+    }
+    
+    func updateUIView(_ view: UIView, context: Context) {
+        
+    }
+}
+
+@available(iOS 13.0, *)
+struct SwiftLeeViewController_Preview: PreviewProvider {
+    static var previews: some View {
+        SwiftLeeViewRepresentable()
+    }
+}
+#endi
+
+	0.	Opaque types:  is used to declare expected type without defining  a concrete type.
+
+Result builder
+
+Is like a translator for a system. They convert your syntax to swift syntax
+
+Allows you to build result using build blocks lined up one after each other.
+
+In swiftui we have @viewbuilder which is developed based on result builder.
+
+
+struct ContentView: View {
+     var body: some View {
+         // This is inside a result builder
+         VStack {
+             Text("Hello World!") // VStack and Text are 'build blocks'
+         }
+     }
+ }
+
+Each child view, in this case a VStack containing a Text, will be combined into a single View. In other words, the View building blocks are built into a View result. This is important to understand as it explains how result builders work.
+
+Example 
+
+func makeSentence1() -> String {
+    "Why settle for a Duke when you can have a Prince?"
+}
+print(makeSentence1())
+
+That works great, but what if had several strings we wanted to join together? Just like SwiftUI, we might want to provide them all individually and have Swift figure it out, however this kind of code won’t work:
+
+// This is invalid Swift, and will not compile.
+// func makeSentence2() -> String {
+//     "Why settle for a Duke"
+//     "when you can have"
+//     "a Prince?"
+// }
+
+@resultBuilder
+struct SimpleStringBuilder {
+    static func buildBlock(_ parts: String...) -> String {
+        parts.joined(separator: "\n")
+    }
+}
+
+The @resultBuilder attribute tells Swift the following type should be treated as a result builder
+
+let joined = SimpleStringBuilder.buildBlock(
+    "Why settle for a Duke",
+    "when you can have",
+    "a Prince?"
+)
+
+print(joined)
+
+@resultBuilder
+struct ConditionalStringBuilder {
+    static func buildBlock(_ parts: String...) -> String {
+        parts.joined(separator: "\n")
+    }
+
+    static func buildEither(first component: String) -> String {
+        return component
+    }
+
+    static func buildEither(second component: String) -> String {
+        return component
+    }
+
+
+}
+
+
+
+@ConditionalStringBuilder func makeSentence4() -> String {
+    "Why settle for a Duke"
+    "when you can have"
+
+    if Bool.random() {
+        "a Prince?"
+    } else {
+        "a King?"
+    }
+}
+
+ComplexStringBuilder-> has one additional method which is below
+static func buildArray(_ components: [String]) -> String {
+        components.joined(separator: "\n")
+    }
+
+@ComplexStringBuilder func countDown() -> String {
+    for i in (0...10).reversed() {
+        "\(i)…"
+    }
+
+    "Lift off!"
+}
+
+print(countDown())
+
+import SwiftUI
+
+struct CustomVStack<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack {
+            // custom functionality here
+            content
+        }
+    }
+}
+
+protocol MyProtocol {
+    var name: String { get }
+}
+
+extension MyProtocol {
+    var name: String {
+        return "Default Name"
+    }
+}
+
+struct Config: MyProtocol { 
+var name: String {
+        return “Updated Name"
+    }
+}
+
+Here when we use Config.name it says default name instead of updated name
+
+
+Design patterns:
+“Capture and externalize an object’s internal state so that it can be restored later, without violating encapsulation.”
+
+
+Encode json to data to save in storage, then decodable to model,
+Encodable and decodable
+
+
+Generics 
+
+Best practice
+Dry programming do not repeat yourself
+Solid principles
+
+
+Swift is a type-safe language. You can’t even add an Int to a Double unless you convert one type to the other. The compiler keeps an eye on every line of code and flags any type mismatches. If you want to write a function or data structure that performs the same operations on different types of objects, it might seem that you must write the same code multiple times, once for each object type. But this would violate the DRY (Don’t Repeat Yourself) principle of software development. Fortunately, there’s a solution: Generic functions and types let you write code once and use it for different object types while maintaining type-safety.
+
+func swapValues<T>(a: T, b: T) -> (a: T, b: T) { let temp = a let newA = b let newB = temp return (newA, newB) } swapValues(a: 42, b: 5) swapValues(a: "begin", b: "finish")
+
+If u want to set more than one constraint use where clause in generics
+
+class VehicleType { ... func move(direction: Direction, duration: TimeInterval, speed: Double) { ... } }
+<T where T: VehicleType, T: Comparable>
+
+Comparable==> > or < 
+
+
+
+====
+Swiftui is a modern framework developed by apple to design user interfaces for apple platforms such as iOS, macOS, WatchOS and TVOS.
+
+Unlike UIKIt and Appkit swiftui follows Declarative paradigm where developers speciify how 
+ how the UI should look like and how it should behave instead of manipulating the UI elements.
+
+	
+
+@State
+
+
+	property wrappers allows us to change view state and it also automatically watches its property for changes so that it can make sure that user interface is upto date with latest values.
+ 
+Q. As view is struct, it’s immutable. 
+
+SwiftUI’s @State property wrapper lets us modify our view structs freely, which means as our program changes we can update our view properties to match.
+
+Apple recommends that local view state be marked with private access control, it means that we can’t accidentally write local state from another, which helps your code easier to understand.
+
+System generated persistent store
+Have to give default value
+Good idea to mark state as private
+Any change is always propagated to views reading the state
+
+
+	0.	Binding: using binding we can share state between views like parent and chi.
+	0.	
+
+
+Binding creates a two-way connection between a view and its data source, ensuring the view updates when data changes and vice versa.
+
+Whenever there is a change in datasource it gets updated automatically in view and vice versa.
+Data binding can be achieved using  property wrappers like state, binding. StateObject and environment object.
+
+@State: Manages local, mutable state within a view. Use for simple data like toggles or text input.
+@Binding: Allows a child view to read and write to a parent’s @State or other data source.
+@StateObject: Manages an ObservableObject’s lifecycle, typically used for complex data models.
+@ObservedObject: Subscribes to an ObservableObject for updates but doesn’t own the object.
+@Published: Marks properties in an ObservableObject to trigger view updates when changed.
+
+Stateobject is a property wrapper used to hold reference type which confirm to observable object protocal.
+
+This is used to create and managethe instance of a class that conforms to the observable object protocal.
+
+Observable object protocal monitors the changes in the published property and send an event(object will change) to the subscriber.
+
+This object is created only once and preserved across view reloads.
+
+
+@StateObject is a property wrapper used in SwiftUI to create and own an instance of a reference type that conforms to the ObservableObject protocol.
+It is designed to initialize, store, and manage the lifecycle of the object once for the lifetime of the view. Unlike @ObservedObject, @StateObject ensures the object is created once and preserved across view reloads (e.g., when the view body re-renders).
+The ObservableObject protocol allows the class to publish changes through @Published properties. When an @Published property changes, the object automatically sends a objectWillChange event, notifying any views or subscribers that are observing it to update the UI.
+
+
+Check snapchat testing
+How to test swiftui views
+Memory leaks in swiftui
+
+
+"@autoclosure in Swift is a type attribute that automatically wraps an expression in a closure without requiring explicit braces.
+It's particularly useful when we want lazy evaluation — that is, delaying the execution of a value until it's actually needed.
+
+
+func xyz(condition: Bool) {
+    
+    
+}
+
+xyz(condition: 10 > 20) // 10 > 20 evaluated BEFORE the call
+xyz(condition: 10 > expensiveCheck()) // expensiveCheck() NOT run if 10 > already false
+
+Without @autoclosure, expensive or dangerous code is always run, even if the result isn’t needed.
+func assert(_ condition: @autoclosure () -> Bool, _ message: String) {
+    if !condition() {
+        fatalError(message)
+    }
+}
+
+
+With @autoclosure, if the log message involves expensive string building, it's not executed unless needed.
+
+logIfNeeded("Current time: \(expensiveComputation())")
+
+
+====
+
+
+Builder patterns: This pattern allows you to create complex objects by providing inputs step by step. Instead of creating 
+
+
+
+GeometryReader is a container view that lets you read the size and position of its child views.
+
+Geometry reader lets you read size and position of the child views
+
+
+ZStack overlays views on top of each other, along the Z-axis (depth).
+
+Zstack lets you overlay content on top of each other along z axis.
+
+
+Non copyable types
+
+What If struct contains reference types, performance?
+Anycancellanle
+Erase to any publisher
+Combine latest
+Await with task group
+Task
+
+
+Combine is Apple’s framework for reactive programming introduced at WWDC19. It allows us to process values over time using declarative APIs that can work as an alternative to the delegate pattern or in-blocks callbacks.
+
+
+[14:09, 5/7/2025] Ibm Anil: Required Skills:
+    Programming Languages: Swift, Objective-C
+    Frameworks & Tools: SwiftUI, UIKit, Combine, CoreData, Core Animation
+    Networking: Alamofire, URLSession, WebSockets
+    Database Management: Core Data, Realm, Firebase
+    Concurrency & Multithreading: Grand Central Dispatch (GCD), Combine, Operation Queues
+    Testing & Debugging: XCTest, XCUITest, Instruments (Memory Leak Detection)
+    Version Control: Git, GitHub, GitLab
+    CI/CD & Deployment: Fastlane, TestFlight, App Store Connect
+ 
+iOS Developer Job Responsibilities:
+    App Development: Build and maintain iOS applications using Swift and Objective-C.
+    UI/UX Implementation: Develop responsive and visually appealing interfaces following Apple’s Human Interface Guidelines (HIG).
+    API Integration: Connect apps with RESTful APIs, GraphQL, and third-party services.
+    Performance Optimization: Ensure smooth animations, fast loading times, and memory efficiency.
+    Database Management: Use Core Data, Realm, or CloudKit for data storage.
+    Security & Compliance: Implement authentication (OAuth, Face ID, Touch ID), encryption, and secure coding practices.
+    Testing & Debugging: Conduct unit testing (XCTest), UI testing (XCUITest), and debugging using Xcode tools.
+    App Deployment & Maintenance: Submit and manage apps on the Apple App Store, ensuring compliance with Apple’s policies.
+    Collaboration: Work closely with designers, back-end developers, and product teams to improve user experience.
+ 
+Sample questions could be on the lines of…. and of course, you can evaluate on other areas as well aligned with above JD.
+ 
+Type of architecture used in projects
+What is protocol
+Why do you use multiple inheritance
+Associated type vs Generic type
+Import package vs Testable package
+Touch up vs touch down
+Size classes and what are the size classes that are available
+Permissions - What if user denied the permission and then tried to use the feature again
+WK web view
+How do we send content from native design to webview
+How do you communicate from Web to ioS
+Example of improving customer experience
+
+
+
+“I use CombineLatest when multiple values are interdependent — like enabling a button when several conditions are true. It's great for UI state combining. But I always remember it waits until all sources emit once.”
+
+Touch Down
+	•	Event: When the user’s finger first touches the screen.
+	•	Example: UIControl.Event.touchDown
+Usage:
+	•	Highlight a button visually when touched.
+	•	Start animations or timers.
+	•	Provide immediate feedback.
+
+Touch Up
+	•	Event: When the user lifts their finger after touching the screen.
+	•	Variants:
+	•	touchUpInside: Finger lifted inside the bounds of the control.
+	•	touchUpOutside: Finger lifted outside the bounds of the control.
+	•	Usage:
+	•	Trigger primary actions (touchUpInside is most commonly used for buttons).
+	•	Cancel actions if touch ends outside (touchUpOutside).
+
+
+====
+Single Responsibility Principle (SRP)
+The SRP states that a class should have only one reason to change, meaning it should have a single, well-defined responsibility. This principle is vital in iOS to prevent bloated view controllers and ensure code is easier to maintain, especially in large teams where changes to one feature shouldn’t affect unrelated logic.
+imple Example: Consider a User class that manages both user data (e.g., name, ID) and authentication (e.g., login, logout). If authentication logic changes, it could inadvertently affect user data handling, violating SRP. Instead, split into:
+
+struct User {
+    let id: Int
+    let name: String
+}
+class AuthenticationManager {
+    func login(username: String, password: String) -> Bool {
+        // Authentication logic, e.g., API call
+        return true
+    }
+}
+This separation ensures each class changes for one reason: User for data updates, AuthenticationManager for auth changes.
+
+
+In an iOS app, a ViewController might handle both UI updates and network requests, leading to a "massive view controller" anti-pattern. To adhere to SRP, use a ViewModel to encapsulate business logic, keeping the ViewController focused on UI:
+
+
+class UserViewModel {
+    func fetchUsers(completion: @escaping ([User]) -> Void) {
+        // Simulate network request
+        let users = [User(id: 1, name: "Alice")]
+        completion(users)
+    }
+}
+class UserViewController: UIViewController {
+    let viewModel = UserViewModel()
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        viewModel.fetchUsers { users in
+            // Update UI, e.g., reload table view
+        }
+    }
+}
+
+
+Open-Closed Principle (OCP)
+The OCP suggests that software entities should be open for extension but closed for modification, allowing new functionality without altering existing code. This is particularly useful in iOS for adding features like new notification types or UI components without refactoring.
+
+Simple Example: Imagine a Shape class with a draw() method. To add a Circle, modifying Shape violates OCP. Instead, use inheritance:
+
+class Shape {
+    func draw() {
+        print("Drawing shape")
+    }
+}
+class Circle: Shape {
+    override func draw() {
+        print("Drawing circle")
+    }
+}
+
+
+Liskov Substitution Principle (LSP)
+The LSP states that objects of a superclass should be replaceable with objects of a subclass without affecting the program’s correctness. This ensures type safety and maintainability in iOS, especially for polymorphic behavior.
+
+
+In an iOS app, a PaymentProcessor with processPayment() should allow subclasses like CreditCardPaymentProcessor to be used interchangeably:
+
+
+protocol PaymentProcessor {
+    func processPayment(amount: Decimal) -> Bool
+}
+class CreditCardPaymentProcessor: PaymentProcessor {
+    func processPayment(amount: Decimal) -> Bool {
+        print("Processing credit card payment for \(amount)")
+        return true
+    }
+}
+class PayPalPaymentProcessor: PaymentProcessor {
+    func processPayment(amount: Decimal) -> Bool {
+        print("Processing PayPal payment for \(amount)")
+        return true
+    }
+}
+
+
+Interface Segregation Principle (ISP)
+The ISP suggests that clients should not depend on interfaces they don’t use, promoting smaller, focused protocols. This is crucial in iOS for modular, reusable code, especially with protocols like 
+
+In an iOS app, a DatabaseManager protocol with CRUD methods forces read-only components to implement write methods. Split:
+protocol DatabaseReader {
+    func readData() -> Data
+}
+
+protocol DatabaseWriter {
+    func writeData(data: Data)
+}
+
+class SQLiteManager: DatabaseReader, DatabaseWriter {
+    func readData() -> Data {
+        print("Reading data")
+        return Data()
+    }
+    
+    func writeData(data: Data) {
+        print("Writing data")
+    }
+}
+
+class ReadOnlyDatabase: DatabaseReader {
+    func readData() -> Data {
+        print("Reading from read-only source")
+        return Data()
+    }
+}
+
+Dependency Inversion Principle (DIP)
+The DIP states that high-level modules should not depend on low-level modules; both should depend on abstractions. This is key in iOS for decoupling, especially in MVVM or dependency injection.
+protocol LightProtocol {
+    func turnOn()
+    func turnOff()
+}
+
+class Light: LightProtocol {
+    func turnOn() {}
+    func turnOff() {}
+}
+
+class Switch {
+    let light: LightProtocol
+    
+    init(light: LightProtocol) {
+        self.light = light
+    }
+    
+    func toggle() {
+        if /* condition */ {
+            light.turnOn()
+        } else {
+            light.turnOff()
+        }
+    }
+}
+
+protocol NetworkServiceProtocol {
+    func fetchData(completion: @escaping (Data?) -> Void)
+}
+class NetworkService: NetworkServiceProtocol {
+    func fetchData(completion: @escaping (Data?) -> Void) {
+        // Network logic
+    }
+}
+class ViewController {
+    let networkService: NetworkServiceProtocol
+    init(networkService: NetworkServiceProtocol) {
+        self.networkService = networkService
+    }
+    func loadData() {
+        networkService.fetchData { data in
+            // Handle data
+        }
+    }
+}
+
+
+========
+	•	The Builder pattern is a creational design method that lets you construct complex objects step by step.  
+	•	Instead of using a single initializer with many parameters, a builder class provides methods to set each property incrementally, returning the final object via a build() method
+	•	
+	•	 It's useful for creating objects with many optional parameters, like in iOS UI components.
+	•	
+
+
+class URLRequestBuilder {
+    private var url: URL?
+    private var method: String = "GET"
+    private var headers: [String: String] = [:]
+    private var body: Data?
+
+    func setURL(_ url: URL) -> URLRequestBuilder {
+        self.url = url
+        return self
+    }
+
+    func setMethod(_ method: String) -> URLRequestBuilder {
+        self.method = method
+        return self
+    }
+
+    func setHeader(_ key: String, value: String) -> URLRequestBuilder {
+        headers[key] = value
+        return self
+    }
+
+    func setBody(_ body: Data) -> URLRequestBuilder {
+        self.body = body
+        return self
+    }
+
+    func build() -> URLRequest? {
+        guard let url = url else { return nil }
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        for (key, value) in headers {
+            request.addValue(value, forHTTPHeaderField: key)
+        }
+        request.httpBody = body
+        return request
+    }
+}
+
+// Usage
+let builder = URLRequestBuilder()
+    .setURL(URL(string: "https://api.example.com/data")!)
+    .setMethod("POST")
+    .setHeader("Content-Type", value: "application/json")
+    .setBody(Data("{\"key\":\"value\"}".utf8))
+
+if let request = builder.build() {
+    URLSession.shared.dataTask(with: request) { data, response, error in
+        // Handle response
+    }.resume()
+}
+
+
+========
+Dispatch barrier to be used for handling read write problem..if multiple threads try to read and write, correct state data will not be sent..so here while writing dispatch barrier will be used, so only one thread can write..while reading mark it as sync so it will be accessed one by one.
+
+GCD: is a low level api for performing concurrent tasks.
+
+with gcd you add piece of work item to queue, gcd will take care of managing work.
+It has serial and global queue.
+
+Main: used for ui updates
+Global queues: used for performing tasks concurrently
+
+
+Closure is a self containing block of code that can be passed around.
+
+
+If u want to perform for loop tasks concurrently, you can use
+
+DispatchQueue.concurrentPerform(iterations: addresses.count) { index in
+
+If we want to perform multiple operations concurrently and notify one done then
+U can use
+
+Dispatch groups.
+
+Dispatch group enter
+Dispatch group leave
+Dispatch group.notify
+
+
+
+Stateobject is a property wrapper used to hold reference type which confirm to observable object protocal.
+
+This is used to create and managethe instance of a class that conforms to the observable object protocal.
+
+Observable object protocal monitors the changes in the published property and send an event(object will change) to the subscriber.
+
+This object is created only once and preserved across view reloads.
+=======
+Strict concurrency checking at compile-time to prevent data races.
+Macros for compile-time code generation.
+Improved Swift Package Manager with plugins and registry support.
+Better diagnostics, and
+Performance improvements in compilation and actor isolation.
+
+
+
+class WebViewCoordinator: NSObject, WKNavigationDelegate {
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+
+        if let url = navigationAction.request.url {
+            print("Intercepted URL: \(url.absoluteString)")
+
+            if url.absoluteString.contains("blocked") {
+                decisionHandler(.cancel) // Block specific URLs
+                return
+            }
+        }
+
+        decisionHandler(.allow) // Allow all others
+    }
+}
+
+
+=======
+
+
+The Combine framework provides a declarative Swift API for processing values over time.
+Rather than implementing compltion blocks and delegate call backs you can create a single process chain for given event source.
+
+Each part of chain is combine operator that performs distinct action on the elements received from previous action.
+
+Solid principles
+
+
+Model-View-ViewModel (MVVM) is a structural design pattern that separates objects into three distinct groups:
+	•			Models hold application data. They’re usually structs or simple classes.
+	•			Views display visual elements and controls on the screen. They’re typically subclasses of UIView.
+	•			View models transform model information into values that can be displayed on a view. They’re usually classes, so they can be passed around as references.
+
+Core Data is an object graph and persistence framework provided by Apple in the macOS and iOS operating systems
+
+Bridge both using:
+o UIHostingController to embed SwiftUI into UIKit
+o UIViewControllerRepresentable / UIViewRepresentable to embed UIKit into SwiftUI
+This allows for incremental migration, preserves existing investments, and prepares your app for the futur
+
+
+
+==========
+Below is a concise list of iOS interview questions specifically focused on **Combine**, Apple's reactive programming framework introduced in iOS 13. These questions cover key concepts, practical applications, and common use cases, along with clear answers to help you prepare for an iOS developer interview. The questions are designed for various experience levels, from beginner to advanced.
+
+---
+
+### **1. What is Combine, and what is its purpose in iOS development?**
+**Answer**:
+- Combine is Apple’s framework for reactive programming, enabling the processing of asynchronous events and data streams over time.
+- It provides a declarative way to handle events like user input, network responses, and state changes.
+- Key components: **Publishers** (emit values), **Subscribers** (receive values), and **Operators** (transform or filter values).
+- Purpose: Simplifies asynchronous programming, integrates with SwiftUI, and replaces older patterns like delegates or closures for event handling.
+- Example use cases: Networking, UI event handling, and state management.
+
+---
+
+### **2. What are Publishers and Subscribers in Combine?**
+**Answer**:
+- **Publisher**:
+  - A type that emits a sequence of values over time, along with possible errors or completion events.
+  - Conforms to the `Publisher` protocol with an `Output` (value type) and `Failure` (error type).
+  - Example: `Just(5)` is a publisher that emits a single value.
+- **Subscriber**:
+  - A type that receives values, errors, or completion events from a publisher.
+  - Conforms to the `Subscriber` protocol or uses built-in subscribers like `Sink` or `Assign`.
+  - Example: `sink` subscribes to a publisher to handle its output.
+- Example:
+  ```swift
+  import Combine
+  let publisher = Just("Hello")
+  let subscriber = publisher.sink { value in
+      print("Received: \(value)") // Output: Received: Hello
+  }
+  ```
+
+---
+
+### **3. What is the difference between `sink` and `assign` in Combine?**
+**Answer**:
+- **Sink**:
+  - A subscriber that allows custom handling of values and completion events via closures.
+  - Flexible for complex logic, such as updating UI or logging.
+  - Example:
+    ```swift
+    publisher.sink { completion in
+        print("Completed: \(completion)")
+    } receiveValue: { value in
+        print("Value: \(value)")
+    }
+    ```
+- **Assign**:
+  - A subscriber that directly assigns publisher output to a property on an object using a key path.
+  - Used for simple binding, typically with `@Published` properties or UI updates.
+  - Requires the property to match the publisher’s output type.
+  - Example:
+    ```swift
+    class ViewModel {
+        @Published var text: String = ""
+    }
+    let viewModel = ViewModel()
+    publisher.assign(to: \.text, on: viewModel)
+    ```
+- **Key Difference**: `sink` is for custom logic; `assign` is for direct property binding.
+
+---
+
+### **4. What is `@Published`, and how is it used in Combine?**
+**Answer**:
+- `@Published` is a property wrapper that turns a property into a publisher, emitting new values whenever the property changes.
+- Commonly used in view models to drive reactive UI updates, especially with SwiftUI.
+- The publisher is accessed via `$propertyName` and emits the property’s value.
+- Example:
+  ```swift
+  class ViewModel {
+      @Published var username: String = ""
+  }
+  let viewModel = ViewModel()
+  viewModel.$username
+      .sink { name in
+          print("Username: \(name)")
+      }
+  viewModel.username = "John" // Output: Username: John
+  ```
+- Use `@Published` for reactive state management in MVVM architectures.
+
+---
+
+### **5. How does Combine handle errors?**
+**Answer**:
+- Publishers in Combine declare a `Failure` type, which can be an `Error` or `Never` (no errors).
+- Errors are propagated through the pipeline and handled by subscribers like `sink`.
+- **Error Handling Techniques**:
+  - **Catch**: Replaces an error with a new publisher.
+  - **MapError**: Transforms an error into another error type.
+  - **ReplaceError**: Replaces an error with a default value.
+  - **Retry**: Attempts to resubscribe to the publisher a specified number of times.
+- Example:
+  ```swift
+  enum NetworkError: Error { case invalidResponse }
+  let publisher = Fail<String, NetworkError>(error: .invalidResponse)
+  publisher
+      .catch { _ in Just("Recovered") }
+      .sink { value in
+          print(value) // Output: Recovered
+      }
+  ```
+
+---
+
+### **6. What are operators in Combine, and how are they used?**
+**Answer**:
+- Operators are methods on publishers that transform, filter, or combine their output, returning a new publisher.
+- They enable chaining to build complex data pipelines.
+- Common operators:
+  - `map`: Transforms values.
+  - `filter`: Filters values based on a condition.
+  - `debounce`: Delays events to reduce rapid updates (e.g., for search input).
+  - `merge`: Combines multiple publishers.
+- Example:
+  ```swift
+  let publisher = [1, 2, 3, 4].publisher
+  publisher
+      .filter { $0 % 2 == 0 }
+      .map { "Value: \($0)" }
+      .sink { print($0) } // Output: Value: 2, Value: 4
+  ```
+
+---
+
+### **7. What is the difference between `PassthroughSubject` and `CurrentValueSubject`?**
+**Answer**:
+- **PassthroughSubject**:
+  - A subject that broadcasts values to subscribers without storing a value.
+  - Used for imperative event broadcasting (e.g., button taps).
+  - Example:
+    ```swift
+    let subject = PassthroughSubject<String, Never>()
+    subject.sink { print($0) }
+    subject.send("Hello") // Output: Hello
+    ```
+- **CurrentValueSubject**:
+  - A subject that stores a current value and emits it to new subscribers immediately.
+  - Useful for stateful data, like form input or UI state.
+  - Example:
+    ```swift
+    let subject = CurrentValueSubject<String, Never>("Initial")
+    subject.sink { print($0) } // Output: Initial
+    subject.send("Updated")    // Output: Updated
+    ```
+- **Key Difference**: `PassthroughSubject` is stateless; `CurrentValueSubject` maintains and shares a current value.
+
+---
+
+### **8. How do you cancel a Combine subscription?**
+**Answer**:
+- Subscriptions in Combine are managed by `Cancellable` objects, which can be canceled to stop receiving updates.
+- Store subscriptions in a `Set<AnyCancellable>` to manage their lifecycle (automatically cancels when the set is deallocated).
+- Use `cancel()` to explicitly stop a subscription.
+- Example:
+  ```swift
+  class ViewModel {
+      var cancellables = Set<AnyCancellable>()
+      func fetchData() {
+          let publisher = Just("Data")
+          publisher
+              .sink { print($0) }
+              .store(in: &cancellables) // Store subscription
+      }
+      func cancelSubscriptions() {
+          cancellables.forEach { $0.cancel() } // Cancel all
+      }
+  }
+  ```
+- Use `store(in:)` for automatic cleanup in view models or view controllers.
+
+---
+
+### **9. How do you use Combine with URLSession for networking?**
+**Answer**:
+- `URLSession`’s `dataTaskPublisher` creates a publisher for network requests, emitting a `(data, response)` tuple or an error.
+- Use operators to process the response (e.g., `map`, `decode`) and handle errors.
+- Example:
+  ```swift
+  import Combine
+  struct User: Codable { let name: String }
+  let url = URL(string: "https://api.example.com/user")!
+  URLSession.shared.dataTaskPublisher(for: url)
+      .map { $0.data }
+      .decode(type: User.self, decoder: JSONDecoder())
+      .catch { _ in Just(User(name: "Fallback")) }
+      .sink { user in
+          print("User: \(user.name)")
+      }
+      .store(in: &cancellables)
+  ```
+- Ensure execution on the main thread for UI updates using `receive(on: DispatchQueue.main)`.
+
+---
+
+### **10. What is the role of schedulers in Combine?**
+**Answer**:
+- Schedulers determine the execution context (e.g., thread or queue) for a publisher’s events.
+- Combine uses schedulers via operators like `receive(on:)` or `subscribe(on:)`.
+  - `receive(on:)`: Specifies where downstream operations (e.g., subscriber) execute.
+  - `subscribe(on:)`: Specifies where the publisher’s work (e.g., network call) executes.
+- Common schedulers:
+  - `DispatchQueue.main`: For UI updates.
+  - `DispatchQueue.global()`: For background tasks.
+- Example:
+  ```swift
+  let publisher = Just("Hello")
+  publisher
+      .receive(on: DispatchQueue.main)
+      .sink { print($0) } // Runs on main thread
+      .store(in: &cancellables)
+  ```
+
+---
+
+### **11. How do you debounce user input using Combine?**
+**Answer**:
+- The `debounce` operator delays events until a specified time interval passes without new events, useful for handling rapid user input (e.g., search fields).
+- Example (SwiftUI + Combine):
+  ```swift
+  class SearchViewModel {
+      @Published var searchText: String = ""
+      var cancellables = Set<AnyCancellable>()
+      init() {
+          $searchText
+              .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)
+              .sink { text in
+                  print("Search for: \(text)")
+              }
+              .store(in: &cancellables)
+      }
+  }
+  ```
+- Here, search queries are processed only after the user pauses typing for 0.5 seconds.
+
+---
+
+### **12. What is the difference between `merge` and `combineLatest` in Combine?**
+**Answer**:
+- **Merge**:
+  - Combines multiple publishers of the same type into a single publisher, emitting values as they arrive from any source.
+  - Preserves the order of events from all publishers.
+  - Example:
+    ```swift
+    let pub1 = PassthroughSubject<Int, Never>()
+    let pub2 = PassthroughSubject<Int, Never>()
+    Publishers.Merge(pub1, pub2)
+        .sink { print($0) }
+    pub1.send(1) // Output: 1
+    pub2.send(2) // Output: 2
+    ```
+- **CombineLatest**:
+  - Combines the latest values from multiple publishers, emitting a tuple whenever any publisher emits a new value (after all have emitted at least once).
+  - Useful for combining state, like form validation.
+  - Example:
+    ```swift
+    let pub1 = PassthroughSubject<String, Never>()
+    let pub2 = PassthroughSubject<Int, Never>()
+    Publishers.CombineLatest(pub1, pub2)
+        .sink { print("\($0), \($1)") }
+    pub1.send("A") // No output (pub2 hasn’t emitted)
+    pub2.send(1)   // Output: A, 1
+    pub1.send("B") // Output: B, 1
+    ```
+- **Key Difference**: `merge` interleaves values; `combineLatest` emits the latest values as a tuple.
+
+---
+
+### **13. How do you test Combine publishers in unit tests?**
+**Answer**:
+- Use `XCTest` with Combine by subscribing to publishers and asserting their output.
+- Store subscriptions in `Set<AnyCancellable>` to manage lifecycle.
+- Use `XCTestExpectation` for asynchronous testing.
+- Example:
+  ```swift
+  import XCTest
+  import Combine
+  class CombineTests: XCTestCase {
+      var cancellables = Set<AnyCancellable>()
+      func testPublisher() {
+          let publisher = Just("Test")
+          var received: String?
+          let expectation = XCTestExpectation(description: "Publisher emits value")
+          publisher
+              .sink { value in
+                  received = value
+                  expectation.fulfill()
+              }
+              .store(in: &cancellables)
+          wait(for: [expectation], timeout: 1.0)
+          XCTAssertEqual(received, "Test")
+      }
+  }
+  ```
+- Use `fail`, `replaceError`, or `timeout` operators to test error handling or timing.
+
+---
+
+### **14. What are some common challenges when using Combine?**
+**Answer**:
+- **Learning Curve**: Combine’s reactive paradigm can be complex for developers used to imperative programming.
+- **Memory Management**: Forgetting to store `Cancellable` objects can lead to memory leaks or premature cancellation.
+- **Debugging**: Long operator chains can be hard to debug; use `handleEvents` or `print` for logging.
+  - Example: `.print("Debug")` logs all events in a pipeline.
+- **Threading**: Incorrect scheduler usage can cause UI updates on background threads; always use `receive(on: DispatchQueue.main)` for UI.
+- **Backpressure**: Combine doesn’t handle backpressure explicitly, unlike RxSwift, which can lead to performance issues with high-frequency publishers.
+- **Solution**: Break down complex pipelines, use tools like `print`, and test thoroughly.
+
+---
+
+### **15. How does Combine integrate with SwiftUI?**
+**Answer**:
+- Combine integrates seamlessly with SwiftUI for reactive UI updates, primarily through `@Published` and `@StateObject`/`@ObservedObject`.
+- SwiftUI views automatically re-render when `@Published` properties in a view model change.
+- Example:
+  ```swift
+  import SwiftUI
+  import Combine
+  class ViewModel: ObservableObject {
+      @Published var counter = 0
+  }
+  struct ContentView: View {
+      @StateObject private var viewModel = ViewModel()
+      var body: some View {
+          VStack {
+              Text("Counter: \(viewModel.counter)")
+              Button("Increment") {
+                  viewModel.counter += 1
+              }
+          }
+      }
+  }
+  ```
+- Combine pipelines can also drive view updates via `onReceive`:
+  ```swift
+  Text("Value")
+      .onReceive(publisher) { value in
+          // Update view
+      }
+  ```
+
+---
+
+### **Additional Notes**:
+- **Preparation Tips**:
+  - Practice building small Combine pipelines (e.g., networking, form validation) to understand operators and subscriptions.
+  - Study real-world examples, like combining user input or handling API responses.
+  - Be ready to explain how Combine differs from alternatives like RxSwift or closures.
+- **Common Follow-Ups**:
+  - “How would you refactor a delegate-based API to use Combine?”
+  - “Can you implement a search feature with debouncing using Combine?”
+  - “How do you handle memory leaks in Combine?”
+- **Resources**:
+  - Apple’s Combine documentation: [developer.apple.com/documentation/combine](https://developer.apple.com/documentation/combine)
+  - WWDC sessions on Combine (e.g., WWDC 2019: “Introducing Combine”).
+  - Practice with open-source projects or tutorials on GitHub.
+
+---
+
+If you need more advanced Combine questions, specific coding challenges, or examples tailored to a particular use case (e.g., networking, SwiftUI integration), let me know!
+
+
+====
+Observable: an entity that produces data events. For eg like user user input, sensor data, api responses
+Observer: an entity that listens to events emitted by observable. Eg: anything that is displayed on the screen those can be views , application components
+Operators: functions to transform and manipulate 	data
+
+
+Subject: is a special type of publisher that is also a subscriber
+
+—it acts as bridge between publisher and subscriber
+—can multicast data to multiple subscribers
+
+Use cases:
+Real time data streaming
+User interface updates
+Event driven applications
+Reactive web services
+
+
+=====
+‘
+
+Swiftui:
+
+Is declarative framework used for developing  apps for applie platforms such as iOS, macOS, tvOS..watch os
+
+-here we declare how the ui should look like and how it should behave based on the events.
+Unlike uikit, where it follows imparative programming where user responsible for hooking ui outlet from storyboards to code and manipulate ui based on events.
+-swiftui has live preview, as you write, u can see the live preview
+
+
+Opaque type:
+
+Starting from iOS 13, function return type can be specified as some super type without stating concrete sub type.
+
+
+
+Pyramid of dooms
+
+Callbacks are wrapped in callbacks and error handling is not clear and concise.
+
+Here our programs line by line. When it reaches keyword await that indicates section of concurrent code. Concurrent code is called and calling function is suspended until the concurrent code is completed.
+
+Asynchronous code is marked with async, by marking property or method as async you indicate method or property is concurrent.
+
+
+actor: is lot of ways like serial queues except you are not writing ton of boilerplate code to manage your object internal state.
+
+
+To be iteratable in foreach loop, we should adopt caseIteratable protocol.
+For uniquely identifying in for each, we should adopt from identifiable protocol.
+
+Access specifier
+Open: entities marked with open can be accessed within and outside modules and can be overridden
+
+Public: its same as open but with a condition that it can’t be overridden in child classes
+
+Package: @package can be accessed only within package, cannot be overridden or subclassed
+Private: can be accessed within the same class and its extension
+File private: can be accessed within  file only
+
+
+
+======
+
+OOPS concepts:
+
+Class is a blue print or description of object. Its collection of properties and methods.
+Object : is instance of class
+
+	0.	Encapsulation
+	0.	Abstartion
+	0.	Inheritance
+
+Access specifiers:
+Open vs public: In short: An open class is accessible and subclassable outside of the defining module. ... A public class is accessible but not subclassable outside of the defining module. A public class member is accessible but not overridable outside of the defining module.Jul 26, 2017
+
+
+Open : This Access level is everywhere, can access within function, within class, within file, outside of target and even can override as well
+Public : Same as open but can not override.
+Internal : This is default access level. It can be access within module everywhere.
+FilePrivate — This access level area is within file if multiple classes exits in the same file, that also can be accessible.
+
+
+
+Dependency injection: is injecting dependencies to the object instead of objecting creating its own dependencies
+
+Property injection: 		Property injection — In this way we inject property from outside.
+
+class CameraViewModel {
+     var camera = Camera?
+}
+let cameraViewModel = CameraViewModel()
+let customCamera = Camera() // Individual creation
+cameraViewModel.camera = customCamera // here customCamera is injecting to viewModel via
+
+
+2. Constructor/Initializer : Inject object at the time of creation
+
+class CameraViewModel {
+    var camera: Camera
+    init(customCamera: Camera) {
+        self.camera = customCamera
+       }
+}
+// Calling time
+let customCamera = Camera() // Individual creation
+let cameraViewModel = CameraViewModel(customeCamera) //injected by constructor
+
+
+3. Via Protocol/interface Method : Inject it when call method
+
+class Film {
+}
+protocol CameraManager {
+func showInPortrate(in customCamera: Camera)
+}
+extension Film : CameraManager {
+      func showInPortrate(in customCamera: Camera) {
+           print(customCamera)
+          }
+}
+https://singhdivesh.medium.com/how-to-create-dependency-injection-in-swift-d31fb2f42247 
+
+Inout:
+By default all function params are constant, you can only read them but cannot modify.
+
+In order to modify u need to specify as inout
+
+func add(a: inout Int, b: inout Int) -> Int {
+
+a= a + 2
+b= b + 2
+return a + b
+} 
+
+var x = 2
+var y = 2
+add(a: &x, b: &y)
+
+
+
+====
+associatedTpes are used to provide run time data holder inside the protocol
+
+
+protocol UserDataBase {
+
+associatedType DataType
+
+}
+
+ For value types self is constant hence you want be able to modify its properties
+In order to achieve mutability , we need to specify it as mutating so that it will create another copy when you modify the property
+
+
+Struts are preferred since they are value types, every time new copy created when assigning to variable and they are thread safe as no references..
+They are saved in stack whereas references are saved in heap memory..
+Stack memory is faster compare to heap memory as it has clean up mechanism in lifo and it has inbuilt cache…
+3. Stack frame access is easier than the heap frame as the stack has a small region of memory and is cache-friendly but in case of heap frames which are dispersed throughout the memory so it causes more cache misses.
+4. The stack is faster than the heap because stack memory is guaranteed to be released in the reverse order it is allocated. This makes it much easier to manage (no need to merge free areas for example) and optimizes the locality of memory accesses.
+ 
+
+
+Data structures: 0(n) constant time
+
+Solid principles
+Heap memory
+Stack memory
+
+Design patterns
+Reverse a string without using predefined
+Escaping closures
+Define a closure
+
+ let closure: (Int) -> Int = { ( x) in
+            print("hello \(x)")
+            return x * x
+        }
+        print(closure(2))
+Property observers
+Swift ui
+Core data
+Url session
+Background upload
+Size classes
+Content hugging vs compression
+Protocols oriented programming
+Structs classes enums 
+Generics
+iOS app architecture
+
+Ssl pinning
+Keychain
+Gcd vs dispatch queues
+Dispatch barriers
+Singleton memory handling
+Secure principles ==> https ssl pinning 
+Ssl ping main in middle attacks
+Collection view own layout
+Core data delete rules
+Coddle decodable
+serialisation
+Scrum
+Sprint planning
+Estimates: story point point estimations
+
+
+====
+1) Heap vs Stack Memory
+2) Dispatch Queue VS NSOperation Queues
+3) SSL Pinning
+4) Dependency Injection!
+5) Optionals and how many ways you can Unwrap optionals!
+6) Core Data (Random Questions Not Scpecific)
+7) App States
+8) merge vs rebase difference 
+9) classes vs structures
+10) Push Notifications
+11) SOLID Principles
+
+
+
+
+Escaping vs Non Escaping
+TypeAlias
+Associated Type in swift
+Generics
+
+singletons
+
+Content compression resistance vs 
+
+Objective c categories have names whereas soft extension does not have names
+Extensions are used to add additionalital functionality to existing class structure,emum protocol
+
+In objective u can private properties or functions in extension..
+Objective c category file name is like UIColor+HexColor
+U need to import it before use..
+
+
+Private members are accessible only within its defining scope..its also accessible within extension provided its declared in same file..
+
+File private members are accessible with in the same file, though it is accessed outside its defining scope
+
+
+Same file:
+
+class Sum1 {
+    let a: Int!
+    let b: Int!
+    private var result: Int?
+    fileprivate var resultt: Int?
+
+    init(a : Int, b: Int) {
+        self.a = a
+        self.b = b
+    }
+
+    func sum(){
+        result = a + b
+        print(result as! Int)
+    }
+}
+
+let aObj = Sum1.init(a: 10, b: 20)
+aObj.sum()
+aObj.resultt //File Private Accessible as inside same swift file
+aObj.result //Private varaible will not be accessible outside its definition except extensions
+
+extension Sum1{
+
+    func testing() {
+
+        // Both private and fileprivate accessible in extensions
+        print(result)
+        print(resultt)
+    }
+}
+
+//If SUM2 class is created in same file as Sum1 ---
+class Sum2{
+
+    func test(){
+
+        let aSum1 = Sum1.init(a: 2, b: 2)
+        // Only file private accessible
+        aSum1.resultt
+
+    }
+}
+
+
+
+
+Defer, fall thorough
+
+==============
+Application states
+
+Not running
+Inactive
+Active
+Background
+Suspended
+
+App willfinishlaunch
+Did finish launch
+Did become active
+
+To background
+Wllresignactive
+
+========
+We are seeking a highly skilled Senior iOS Mobile Developer to support the design,
+development, and delivery of secure, high-scale mobile applications. This role operates
+within KONEK, a fast-moving, startup-style team within an enterprise environment,
+contributing to mission-critical initiatives involving secure mobile experiences, API-
+driven platforms, and high-reliability systems.
+The successful candidate will work closely with product, design, security, and backend
+teams and is expected to take strong ownership of technical quality, delivery, and
+platform evolution.
+Key Responsibilities
+• Design, develop, and maintain native iOS applications using Swift and SwiftUI
+• Build and maintain SwiftUI-based UI components in a shared design system,
+following modern iOS best practices
+• Write safe, concurrent code using Swift Concurrency (async/await, actors,
+Sendable) under Swift 6 strict concurrency checking
+• Implement deep linking and universal links across the app
+• Integrate and manage feature flags for controlled rollouts and experimentation
+• Collaborate with backend teams to integrate RESTful APIs using secure
+communication patterns
+• Implement secure authentication and authorization flows, including sign-in with
+partner financial institutions
+• Ensure applications meet security, performance, availability, accessibility, and
+compliance requirements
+• Deliver accessible, fully localized experiences (VoiceOver, Dynamic Type,
+English and Canadian French)
+• Contribute to architecture and technical design decisions, including
+modularization (Swift Package Manager) and scalability
+• Implement and maintain automated testing (unit, integration, UI) using Swift
+Testing, XCTest, and XCUITest, and support CI/CD pipelines
+• Take ownership of release management, build pipelines, multi-environment build
+configurations, TestFlight, and App Store submissions
+• Monitor production health (crash reporting, performance, network errors) and
+troubleshoot and resolve production issues with a focus on stability and
+resilience
+• Participate in code reviews and promote mobile engineering best practices
+• Partner with the Android developer to keep features and behaviour consistent
+across platforms
+• Work independently in a small, high-ownership team environment while
+collaborating cross-functionally
+Required Qualifications
+• 6+ years of professional iOS development experience, including at least one app
+shipped and supported in the App Store
+• Strong proficiency in Swift, SwiftUI, Swift Concurrency, iOS SDK, and Apple
+development frameworks, with working knowledge of UIKit
+• Strong understanding of modern iOS architecture patterns (MVVM, Clean
+Architecture, Coordinator) and dependency injection
+• Hands-on experience with secure mobile development practices (OWASP
+MASVS / Mobile Top 10)
+• Experience working with the Core Bluetooth framework for scanning, connecting,
+and communicating with Bluetooth Low Energy (BLE) devices
+• Experience integrating backend systems using REST/JSON APIs
+• Experience with deep linking, universal links, and feature flagging
+• Familiarity with App Store deployment, App Store Connect, provisioning profiles,
+and certificates
+• Experience working in Agile / Scrum delivery environments
+• Comfortable working in a high-ownership, startup-paced team within an
+enterprise
+Security-Focused Experience (Required)
+• Secure authentication mechanisms including biometrics (Face ID / Touch ID) and
+secure PIN flows
+• Experience with certificate pinning and secure network communication
+• Understanding of JWT tokens and secure session management (token refresh,
+expiry, and sign-out)
+• Knowledge of secure mobile storage (Keychain, Secure Enclave) and
+cryptography basics (CryptoKit)
+• Familiarity with App Attest for app integrity and backend request validation
+Preferred / Nice-to-Have Qualifications
+• Experience with payments, banking, or financial services applications
+• Exposure to digital wallets, tokenization, or card-based payment flows
+• Experience with OAuth 2.0 / OpenID Connect (PKCE,
+ASWebAuthenticationSession)
+• Knowledge of PCI DSS or regulatory requirements in financial services
+• Experience with mobile CI/CD tools and test automation frameworks
+• Exposure to high-availability, high-transaction-volume platforms
+• Experience working in large enterprise or regulated environments
+• Experience with mobile observability tools (e.g., Dynatrace, Crashlytics) and
+performance profiling with Instruments
+• Exposure to Kotlin Multiplatform or other shared cross-platform code
+• Responsible use of AI-assisted development tools, including reviewing what they
+produce
+Soft Skills & Competencies
+• Strong problem-solving and analytical skills
+• Excellent communication and collaboration skills, including clear written technical
+design proposals
+• Ability to work effectively across product, design, security, QA, and operations
+teams
+• Strong ownership mindset with attention to quality, reliability, and security
